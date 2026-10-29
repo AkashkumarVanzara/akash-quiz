@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Well Do You Know Akash</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: a mountain-trail quiz. A ridge line sits on top as the progress bar and a dot hikes along it, one step per answer. One question per screen, two tap cards each, score and review at the summit. */
+:root {
+  --bg: #eef2ea;
+  --surface: #ffffff;
+  --ink: #14231b;
+  --muted: #5d6f64;
+  --line: #cfd9cb;
+  --accent: #e4572e;
+  --accent-ink: #ffffff;
+  --good: #2f7d5b;
+  --bad: #c0392b;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a14; --surface: #182820; --ink: #eaf1ea; --muted: #9bb0a2; --line: #2c4237;
+    --accent: #ff7a50; --accent-ink: #1a0d07; --good: #55c28f; --bad: #ff7b6b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a14; --surface: #182820; --ink: #eaf1ea; --muted: #9bb0a2; --line: #2c4237;
+  --accent: #ff7a50; --accent-ink: #1a0d07; --good: #55c28f; --bad: #ff7b6b; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.5;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
+}
+main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.1; }
+.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.w { display: inline-block; animation: word .6s var(--ease-out) backwards; animation-delay: calc(var(--d) * 1ms); }
+@keyframes word { from { opacity: 0; transform: translateY(.5em) rotate(2deg); } }
+
+.btn {
+  font: inherit; font-weight: 700; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
+  padding: 14px 24px; cursor: pointer; align-self: flex-start; transition: transform .2s var(--spring);
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: scale(.96); }
+.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+.pop { animation: pop .6s var(--spring) backwards; animation-delay: calc(var(--d, 0) * 1ms); }
+@keyframes pop { from { opacity: 0; transform: translateY(18px) scale(.9); } }
+
+/* intro */
+.intro { display: flex; flex-direction: column; gap: 20px; padding-top: 20px; }
+.intro h1 { font-size: clamp(40px, 11vw, 60px); font-weight: 800; }
+.intro .hl { color: var(--accent); }
+.intro p { color: var(--muted); margin: 0; max-width: 40ch; }
+.ridge { width: 100%; height: auto; display: block; overflow: visible; }
+.ridge path { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.ridge .draw { stroke-dasharray: 1; animation: draw 1.8s var(--ease-out) .1s backwards; }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.ridge .sun { fill: var(--accent); transform-box: fill-box; transform-origin: center; animation: rise 1.4s var(--ease-out) .5s backwards; }
+@keyframes rise { from { transform: translateY(46px) scale(.6); opacity: 0; } }
+
+/* progress ridge */
+.top { display: flex; flex-direction: column; gap: 6px; animation: fade .5s ease-out backwards; }
+@keyframes fade { from { opacity: 0; } }
+.count { display: flex; justify-content: space-between; }
+.trail { width: 100%; height: auto; display: block; overflow: visible; }
+.trail path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.trail .base { stroke: var(--line); stroke-width: 3; }
+.trail .done { stroke: var(--accent); stroke-width: 3.5; transition: stroke-dashoffset .75s cubic-bezier(.65, 0, .35, 1); }
+.trail .dot { fill: var(--ink); stroke: var(--bg); stroke-width: 3; }
+.trail .flag { fill: var(--accent); }
+.trail .pulse { fill: none; stroke: var(--accent); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
+@keyframes pulse { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.4); opacity: 0; } }
+
+/* question */
+.q { display: flex; flex-direction: column; gap: 22px; }
+.q h2 { font-size: clamp(28px, 7.5vw, 38px); font-weight: 800; }
+.enter { animation: enter .5s var(--ease-out) backwards; }
+.leave { animation: leave .26s ease-in forwards; }
+@keyframes enter { from { opacity: 0; transform: translateX(44px); } }
+@keyframes leave { to { opacity: 0; transform: translateX(-44px); } }
+.opts { display: grid; gap: 12px; }
+.opt {
+  position: relative; overflow: hidden; font: inherit; font-size: 20px; font-weight: 500; text-align: left; color: var(--ink);
+  background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 20px 18px; cursor: pointer; min-height: 72px;
+  transition: transform .3s var(--spring), opacity .3s, border-color .2s, background .3s;
+  animation: pop .6s var(--spring) backwards; animation-delay: calc(var(--d) * 1ms);
+}
+.opt:hover:not(:disabled) { border-color: var(--ink); transform: translateY(-3px); }
+.opt:disabled { cursor: default; }
+.opt.picked { transform: scale(.97); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.opt.dim { opacity: .3; transform: translateY(6px) scale(.98); }
+.ripple { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; background: var(--accent); opacity: .35; pointer-events: none; animation: ripple .7s ease-out forwards; }
+@keyframes ripple { to { transform: scale(26); opacity: 0; } }
+
+/* result */
+.result { display: flex; flex-direction: column; gap: 18px; }
+.score { font-family: var(--font-display); font-weight: 800; font-size: clamp(88px, 28vw, 140px); line-height: 1; font-variant-numeric: tabular-nums; animation: scorein .9s var(--spring) backwards; }
+.score small { font-size: 0.36em; color: var(--muted); }
+@keyframes scorein { from { opacity: 0; transform: scale(.5) rotate(-6deg); } }
+.verdict { font-size: 22px; margin: 0; font-family: var(--font-display); font-weight: 600; }
+.review { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.review li { display: grid; grid-template-columns: 24px 1fr; gap: 4px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; animation: slide .5s var(--ease-out) backwards; animation-delay: calc(var(--d) * 1ms); }
+.review li.miss { animation: slide .5s var(--ease-out) backwards, shake .5s ease-in-out backwards; animation-delay: calc(var(--d) * 1ms), calc(var(--d) * 1ms + 450ms); }
+@keyframes slide { from { opacity: 0; transform: translateX(-24px); } }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+.review svg { width: 22px; height: 22px; grid-row: 1 / span 2; margin-top: 2px; }
+.review svg path { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: draw .5s ease-out backwards; animation-delay: calc(var(--d) * 1ms + 250ms); }
+.review .ok path { stroke: var(--good); }
+.review .no path { stroke: var(--bad); }
+.review .qq { font-size: 14px; color: var(--muted); }
+.review .mark { font-weight: 700; }
+.review .mark.ok { color: var(--good); }
+.review .mark.no { color: var(--bad); }
+/* name entry + leaderboard */
+.namebox { display: flex; flex-direction: column; gap: 6px; }
+.namebox input {
+  font: inherit; font-size: 20px; padding: 14px 16px; border-radius: 10px; border: 2px solid var(--line);
+  background: var(--surface); color: var(--ink); width: 100%; max-width: 320px; transition: border-color .2s;
+}
+.namebox input:focus-visible { outline: none; border-color: var(--accent); }
+.namebox.bad { animation: shake .4s; }
+.err { color: var(--bad); font-size: 14px; min-height: 1.3em; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row .btn { align-self: auto; }
+.result h2 { font-size: clamp(26px, 7vw, 34px); font-weight: 800; }
+.bh { font-family: var(--font-display); font-size: 20px; margin: 4px 0 -6px; }
+.board ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.board li { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.board ol.owner li { grid-template-columns: 32px 1fr auto auto; }
+.board li.me { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.board li.in { animation: slide .5s var(--ease-out) backwards; animation-delay: calc(var(--d) * 1ms); }
+.rank { font-family: var(--font-display); font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.board li:nth-child(-n+3) .rank { color: var(--accent); }
+.nm { overflow-wrap: anywhere; font-weight: 500; }
+.pts { font-variant-numeric: tabular-nums; font-weight: 700; }
+.rm { font: inherit; font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.note { color: var(--muted); font-size: 14px; margin: 0; }
+.share { display: flex; flex-direction: column; gap: 8px; }
+.share input { font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+.share .btn { align-self: flex-start; }
+canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<main>
+  <section class="top" id="top" hidden>
+    <div class="count eyebrow"><span id="count"></span><span>Summit</span></div>
+    <svg class="trail" viewBox="0 0 400 64" aria-hidden="true">
+      <path class="base" id="base" d="M8 54 L52 32 L84 44 L132 14 L178 42 L218 26 L262 48 L312 18 L352 38 L388 12"></path>
+      <path class="done" id="done" d="M8 54 L52 32 L84 44 L132 14 L178 42 L218 26 L262 48 L312 18 L352 38 L388 12"></path>
+      <path class="flag" d="M388 12 L388 0 L399 5 L388 8 Z"></path>
+      <circle class="pulse" id="pulse" r="7" cx="8" cy="54"></circle>
+      <circle class="dot" id="dot" r="7" cx="8" cy="54"></circle>
+    </svg>
+  </section>
+  <div id="stage"></div>
+</main>
+
+<script>
+const QUESTIONS = [
+  { q: "What's Akash's favorite food?", right: "Dal rice", wrong: "Chicken biryani" },
+  { q: "Where does Akash dream of traveling?", right: "New Zealand", wrong: "Canada" },
+  { q: "How does Akash like to relax?", right: "Hiking", wrong: "Walk" },
+  { q: "Which would Akash rather pet?", right: "A horse", wrong: "A dog" },
+  { q: "Akash wins the lottery. What does he do?", right: "Buys everything he wants", wrong: "Buys a house and 20 years of stuff to enjoy life in peace" },
+  { q: "What's Akash's favorite show?", right: "Suits", wrong: "One Piece" },
+  { q: "Is Akash a morning person or a night owl?", right: "Neither", wrong: "Night owl" },
+  { q: "What's Akash's dream goal?", right: "Travel the world", wrong: "Be free to do whatever he wants" },
+  { q: "Which one is true about Akash?", right: "He's lazy", wrong: "He's a genius" },
+  { q: "Which season does Akash like most?", right: "Summer", wrong: "Winter" }
+];
+const TIERS = [
+  [10, "Best friend status. You really know him."],
+  [8, "Solid friend. Just a slip or two."],
+  [6, "Halfway there. Time for more hangouts."],
+  [4, "Acquaintance level. Ouch."],
+  [0, "Do we even know each other?"]
+];
+const N = QUESTIONS.length;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const stage = document.getElementById("stage");
+const top_ = document.getElementById("top");
+const doneP = document.getElementById("done");
+const baseP = document.getElementById("base");
+const dot = document.getElementById("dot");
+const pulse = document.getElementById("pulse");
+const countEl = document.getElementById("count");
+let i = 0, answers = [], order = [], busy = false, trailLen = 0, trailPos = 0;
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function words(text, start, step, cls) {
+  return text.split(" ").map((w, n) => `<span class="w ${cls || ""}" style="--d:${start + n * step}">${esc(w)}</span>`).join(" ");
+}
+function tween(from, to, ms, fn, done) {
+  if (reduced || ms <= 0) { fn(to); if (done) done(); return; }
+  const t0 = performance.now();
+  (function frame(now) {
+    const k = Math.min(1, (now - t0) / ms);
+    const e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    fn(from + (to - from) * e);
+    if (k < 1) requestAnimationFrame(frame); else if (done) done();
+  })(t0);
+}
+
+/* progress ridge */
+function placeDot(t) {
+  const p = baseP.getPointAtLength(trailLen * t);
+  dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
+  pulse.setAttribute("cx", p.x); pulse.setAttribute("cy", p.y);
+}
+function setProgress(t, instant) {
+  doneP.style.strokeDasharray = trailLen;
+  if (instant) doneP.style.transition = "none";
+  doneP.style.strokeDashoffset = trailLen * (1 - t);
+  if (instant) { void doneP.getBoundingClientRect(); doneP.style.transition = ""; }
+  tween(trailPos, t, instant ? 0 : 750, v => placeDot(v));
+  trailPos = t;
+}
+function showTop() {
+  top_.hidden = false;
+  trailLen = baseP.getTotalLength();
+  trailPos = 0;
+  setProgress(0, true);
+}
+
+/* screens */
+function swap(render) {
+  const cur = stage.firstElementChild;
+  if (cur && !reduced) { cur.classList.add("leave"); setTimeout(render, 250); } else render();
+}
+
+function intro() {
+  stage.innerHTML = `
+    <section class="intro">
+      <span class="eyebrow pop" style="--d:0">${N} questions · 2 minutes</span>
+      <h1>${words("How well do you know", 150, 70)} ${words("Akash?", 150 + 5 * 70, 70, "hl")}</h1>
+      <p class="pop" style="--d:800">Each question has two answers. Only one is true. Go with your gut.</p>
+      <svg class="ridge" viewBox="0 0 400 90" aria-hidden="true">
+        <circle class="sun" cx="318" cy="30" r="16"></circle>
+        <path class="draw" pathLength="1" d="M0 80 L70 36 L112 62 L180 14 L250 72 L300 52 L360 80 L400 66"></path>
+      </svg>
+      <div class="namebox pop" style="--d:1000" id="namebox">
+        <label class="eyebrow" for="pname">Your name (max 10 characters)</label>
+        <input id="pname" maxlength="10" autocomplete="nickname" placeholder="Your name" value="${esc(savedName)}">
+        <span class="err" id="perr" role="alert"></span>
+      </div>
+      <div class="row">
+        <button class="btn pop" style="--d:1200" id="start">Start the quiz</button>
+      </div>
+    </section>`;
+  top_.hidden = true;
+  document.getElementById("start").onclick = start;
+  document.getElementById("pname").addEventListener("keydown", e => { if (e.key === "Enter") start(); });
+}
+
+function start() {
+  if (busy) return;
+  const input = document.getElementById("pname");
+  const nm = input.value.trim().replace(/\s+/g, " ").slice(0, 10);
+  if (!nm) {
+    const box = document.getElementById("namebox");
+    document.getElementById("perr").textContent = "Type your name first.";
+    box.classList.remove("bad"); void box.offsetWidth; box.classList.add("bad");
+    input.focus();
+    return;
+  }
+  player = nm;
+  try { localStorage.setItem("quiz-name", nm); } catch (e) {}
+  i = 0; answers = [];
+  order = QUESTIONS.map(() => Math.random() < 0.5);
+  swap(() => { showTop(); question(); });
+}
+
+function question() {
+  busy = false;
+  const item = QUESTIONS[i];
+  const opts = [{ t: item.right, ok: true }, { t: item.wrong, ok: false }];
+  if (order[i]) opts.reverse();
+  countEl.textContent = `Question ${i + 1} of ${N}`;
+  const qWords = item.q.split(" ").length;
+  const optStart = 150 + qWords * 40;
+  stage.innerHTML = `
+    <section class="q enter">
+      <h2>${words(item.q, 120, 40)}</h2>
+      <div class="opts">
+        ${opts.map((o, n) => `<button class="opt" style="--d:${optStart + n * 130}" data-ok="${o.ok}">${esc(o.t)}</button>`).join("")}
+      </div>
+    </section>`;
+  stage.querySelectorAll(".opt").forEach(b => b.onclick = e => choose(b, e));
+}
+
+function choose(b, e) {
+  if (busy) return;
+  busy = true;
+  const r = b.getBoundingClientRect();
+  const x = e.detail ? e.clientX - r.left : r.width / 2;
+  const y = e.detail ? e.clientY - r.top : r.height / 2;
+  const rip = document.createElement("span");
+  rip.className = "ripple"; rip.style.left = x + "px"; rip.style.top = y + "px";
+  b.appendChild(rip);
+  stage.querySelectorAll(".opt").forEach(o => { o.disabled = true; if (o !== b) o.classList.add("dim"); });
+  b.classList.add("picked");
+  answers.push({ ok: b.dataset.ok === "true", picked: b.firstChild.textContent });
+  setProgress((i + 1) / N);
+  setTimeout(() => swap(() => { i++; i < N ? question() : result(); }), reduced ? 0 : 560);
+}
+
+function result() {
+  busy = false;
+  countEl.textContent = "Summit reached";
+  const score = answers.filter(a => a.ok).length;
+  const verdict = TIERS.find(t => score >= t[0])[1];
+  const rows = QUESTIONS.map((q, n) => {
+    const a = answers[n];
+    const d = 2000 + n * 90;
+    const icon = a.ok
+      ? `<svg class="ok" viewBox="0 0 22 22" aria-hidden="true"><path pathLength="1" d="M4 11.5 L9 16.5 L18 5.5"></path></svg>`
+      : `<svg class="no" viewBox="0 0 22 22" aria-hidden="true"><path pathLength="1" d="M5 5 L17 17 M17 5 L5 17"></path></svg>`;
+    const text = a.ok ? esc(q.right) : "You said " + esc(a.picked) + ". It's " + esc(q.right) + ".";
+    return `<li class="${a.ok ? "hit" : "miss"}" style="--d:${d}">${icon}<span class="qq">${esc(q.q)}</span><span class="mark ${a.ok ? "ok" : "no"}">${text}</span></li>`;
+  }).join("");
+  stage.innerHTML = `
+    <section class="result enter">
+      <span class="eyebrow">${esc(player)}'s score</span>
+      <div class="score"><span id="num">0</span><small>/${N}</small></div>
+      <p class="verdict">${words(verdict, 1100, 70)}</p>
+      <div class="share pop" style="--d:1300">
+        <label class="eyebrow" for="sharetxt">Send this to Akash</label>
+        <input id="sharetxt" readonly value="${esc(player)} got ${score}/${N} on the How Well Do You Know Akash quiz">
+        <button class="btn" id="copy">Copy my score</button>
+      </div>
+      <ul class="review">${rows}</ul>
+      <button class="btn ghost pop" style="--d:${2000 + N * 90 + 100}" id="again">Try again</button>
+    </section>`;
+  const num = document.getElementById("num");
+  tween(0, score, 1100, v => { num.textContent = Math.round(v); });
+  if (score >= 8) setTimeout(confetti, reduced ? 0 : 900);
+  const copyBtn = document.getElementById("copy"), box = document.getElementById("sharetxt");
+  copyBtn.onclick = () => {
+    box.select();
+    const ok = () => { copyBtn.textContent = "Copied!"; setTimeout(() => { copyBtn.textContent = "Copy my score"; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(box.value).then(ok, () => { copyBtn.textContent = "Press copy on the text"; });
+    else copyBtn.textContent = "Press copy on the text";
+  };
+  document.getElementById("again").onclick = () => {
+    if (busy) return;
+    busy = true;
+    swap(() => { i = 0; answers = []; order = QUESTIONS.map(() => Math.random() < 0.5); busy = false; setProgress(0, true); question(); });
+  };
+}
+
+function confetti() {
+  if (reduced) return;
+  const cs = getComputedStyle(document.documentElement);
+  const colors = ["--accent", "--good", "--ink", "--muted"].map(k => cs.getPropertyValue(k).trim());
+  const c = document.createElement("canvas");
+  c.className = "confetti";
+  const dpr = window.devicePixelRatio || 1;
+  const W = innerWidth, H = innerHeight;
+  c.width = W * dpr; c.height = H * dpr;
+  document.body.appendChild(c);
+  const g = c.getContext("2d");
+  g.scale(dpr, dpr);
+  const bits = Array.from({ length: 140 }, () => {
+    const a = -Math.PI / 2 + (Math.random() - .5) * 1.7;
+    const s = 6 + Math.random() * 10;
+    return {
+      x: W / 2, y: H * .38, vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4,
+      w: 6 + Math.random() * 6, h: 3 + Math.random() * 5, col: colors[Math.floor(Math.random() * colors.length)]
+    };
+  });
+  const t0 = performance.now();
+  (function frame(now) {
+    const t = now - t0;
+    g.clearRect(0, 0, W, H);
+    bits.forEach(b => {
+      b.vy += .28; b.vx *= .992; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      g.save();
+      g.globalAlpha = Math.max(0, 1 - t / 3200);
+      g.translate(b.x, b.y); g.rotate(b.r); g.fillStyle = b.col; g.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      g.restore();
+    });
+    if (t < 3200) requestAnimationFrame(frame); else c.remove();
+  })(t0);
+}
+
+let player = "", savedName = "";
+try { savedName = localStorage.getItem("quiz-name") || ""; } catch (e) {}
+
+intro();
+</script>
+
+</html>
